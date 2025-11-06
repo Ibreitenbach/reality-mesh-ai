@@ -2,12 +2,6 @@
 
 Complete spatial capture combining camera + all phone sensors.
 
-## Files
-
-- **`reality-mesh-sensors.html`** - Full sensor + visual capture (RECOMMENDED)
-- **`reality-mesh-local.html`** - Visual only with simple object detection
-- **`mesh-capture-standalone.html`** - Basic 3D point cloud capture
-
 ## Captured Data
 
 ### Visual
@@ -25,11 +19,10 @@ Complete spatial capture combining camera + all phone sensors.
 
 ## Usage
 
-1. **Copy to Phone**: Transfer `reality-mesh-sensors.html` to your Samsung Galaxy S24 FE
-2. **Open in Chrome**: Use Chrome for best sensor support
-3. **Grant Permissions**: Allow camera, location, and sensor access
-4. **Start Capture**: Move phone around to scan environment
-5. **Export**: Download JSON with all captured data
+1. **Open on Phone**: Visit [https://ibreitenbach.github.io/reality-mesh-ai/reality-mesh-sensors.html](https://ibreitenbach.github.io/reality-mesh-ai/reality-mesh-sensors.html)
+2. **Grant Permissions**: Allow camera, location, and sensor access
+3. **Start Capture**: Move phone around to scan environment
+4. **Export**: Download JSON with all captured data
 
 ## Exported Data Format
 

@@ -32,21 +32,7 @@
 
 ---
 
-### 3. **reality-mesh-local.html**
-**Best for**: Simple object detection without API
-
-**Features**:
-- ✅ Simulated object detection
-- ✅ Visual bounding boxes
-- ✅ Depth estimation
-- ✅ Export with detection metadata
-- ⚠️ Uses random detection (placeholder for MediaPipe)
-
-**Use When**: Testing the UI/workflow without real detection
-
----
-
-### 4. **mesh-capture-standalone.html**
+### 3. **mesh-capture-standalone.html**
 **Best for**: Basic point cloud capture
 
 **Features**:
@@ -60,33 +46,17 @@
 
 ---
 
-### 5. **Reality Mesh AI (Original - in Downloads/)**
-**Best for**: Real AI object detection
-
-**Features**:
-- ✅ Gemini 2.5 Flash integration
-- ✅ Real object detection with names
-- ✅ Spatial relationships
-- ✅ Depth estimation
-- ⚠️ Requires Gemini API key
-- ⚠️ Requires npm install & build
-
-**Use When**: You want real AI-powered object recognition
-
----
-
 ## 📊 Quick Comparison
 
-| Feature | Guided | Sensors | Local | Standalone | Original |
-|---------|--------|---------|-------|------------|----------|
-| **Guidance** | ✅ 5 modes | ❌ | ❌ | ❌ | ❌ |
-| **Sensors** | ⚠️ Partial | ✅ Full | ❌ | ❌ | ❌ |
-| **Object Detection** | ❌ | ❌ | ⚠️ Simulated | ❌ | ✅ Real (AI) |
-| **Point Cloud** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Progress Tracking** | ✅ | ⚠️ Basic | ❌ | ❌ | ⚠️ Basic |
-| **Setup** | None | None | None | None | npm install |
-| **API Required** | ❌ | ❌ | ❌ | ❌ | ✅ Gemini |
-| **File Size** | Medium | Medium | Medium | Small | Large |
+| Feature | Guided | Sensors | Standalone |
+|---------|--------|---------|------------|
+| **Guidance** | ✅ 5 modes | ❌ | ❌ |
+| **Sensors** | ⚠️ Partial | ✅ Full | ❌ |
+| **Point Cloud** | ✅ | ✅ | ✅ |
+| **Progress Tracking** | ✅ | ⚠️ Basic | ❌ |
+| **Setup** | None | None | None |
+| **API Required** | ❌ | ❌ | ❌ |
+| **File Size** | Medium | Medium | Small |
 
 ---
 
@@ -105,12 +75,6 @@
 2. Capture freely with all sensor data
 3. Most comprehensive dataset
 4. Process later to determine quality
-
-#### Option C: AI Recognition (Original App)
-1. Set up the original **Reality Mesh AI** from Downloads
-2. Get Gemini API key
-3. Real object detection and spatial understanding
-4. Best for semantic understanding
 
 ---
 
@@ -215,9 +179,9 @@
 ## 📝 Summary
 
 **Start Here**:
-1. Copy **`reality-mesh-guided.html`** to your phone
+1. Open **`reality-mesh-guided.html`** on your phone
 2. Try **"Quick Orbital"** mode on a small object
 3. Export the JSON
-4. Share with me to process!
+4. Share for processing!
 
 This will give us real data to work with for the next steps! 🎯

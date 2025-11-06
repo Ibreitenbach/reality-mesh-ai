@@ -8,13 +8,13 @@ Capture your environment in 3D using just your phone's camera and sensors. No in
 
 ## 🚀 Try It Now!
 
-### [🎯 **Guided Capture** (Recommended)](./reality-mesh-guided.html)
+### [🎯 **Guided Capture** (Recommended)](https://ibreitenbach.github.io/reality-mesh-ai/reality-mesh-guided.html)
 Professional capture modes with step-by-step guidance
 
-### [📱 **Sensor Fusion**](./reality-mesh-sensors.html)
+### [📱 **Sensor Fusion**](https://ibreitenbach.github.io/reality-mesh-ai/reality-mesh-sensors.html)
 Maximum sensor data (gyro, accelerometer, GPS, compass)
 
-### [✨ **Simple Capture**](./mesh-capture-standalone.html)
+### [✨ **Simple Capture**](https://ibreitenbach.github.io/reality-mesh-ai/mesh-capture-standalone.html)
 Quick and easy point cloud capture
 
 ---
@@ -32,8 +32,8 @@ Quick and easy point cloud capture
 
 ## 📱 Quick Start
 
-1. **Open on your phone**: Visit this repository's GitHub Pages
-2. **Choose an app**: Start with [Guided Capture](./reality-mesh-guided.html)
+1. **Open on your phone**: Visit [https://ibreitenbach.github.io/reality-mesh-ai/](https://ibreitenbach.github.io/reality-mesh-ai/)
+2. **Choose an app**: Start with [Guided Capture](https://ibreitenbach.github.io/reality-mesh-ai/reality-mesh-guided.html)
 3. **Grant permissions**: Allow camera and sensor access
 4. **Start capturing**: Follow the on-screen guidance
 5. **Export**: Download your 3D data as JSON

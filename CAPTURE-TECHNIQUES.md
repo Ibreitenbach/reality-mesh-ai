@@ -167,7 +167,7 @@ Different capture patterns produce different quality results. This guide covers 
 ## 📐 Distance Guidelines
 
 | Object Size | Starting Distance | Ending Distance |
-|-------------|------------------|-----------------|
+|-------------|------------------|------------------|
 | Small (<1ft) | 2-3 feet | 6 inches |
 | Medium (1-3ft) | 5-6 feet | 2 feet |
 | Large (>3ft) | 10+ feet | 3-4 feet |
@@ -200,25 +200,6 @@ Different capture patterns produce different quality results. This guide covers 
 
 ---
 
-## 🧪 Experimental Techniques
-
-### 1. **Spiral Approach**
-- Combine zoom-in with orbital
-- Walk in spiral getting closer as you circle
-- Best of both techniques
-
-### 2. **Figure-8 Pattern**
-- Walk figure-8 around object
-- Natural variation in angles
-- Good for organic subjects
-
-### 3. **Random Walk with Coverage**
-- Free-form movement
-- Ensure all angles covered
-- Good for exploration/testing
-
----
-
 ## 🎯 Recommended Workflow for Our App
 
 ### Phase 1: Quick Scan (30 seconds)
@@ -237,27 +218,5 @@ Different capture patterns produce different quality results. This guide covers 
 3. Spatial relationships
 
 **Total Time**: 3-4 minutes for complete capture
-
----
-
-## 📱 App Features to Build
-
-### Capture Modes
-1. **Quick Orbital** - Guided circle with progress indicator
-2. **Pro Multi-Pass** - Multiple heights with guidance
-3. **Room Scanner** - Grid pattern guide
-4. **Free Capture** - No guidance, just record
-
-### Real-Time Feedback
-- Coverage map (which angles captured)
-- Movement speed indicator
-- Overlap percentage
-- Quality metrics (blur detection)
-
-### Guidance System
-- Visual overlay showing where to move
-- Audio cues ("move left", "move higher")
-- Progress indicators
-- Vibration feedback for good frames
 
 This will help users capture optimal data without training! 🚀
