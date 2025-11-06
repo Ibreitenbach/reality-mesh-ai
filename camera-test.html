@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Test - Simple</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #000; color: #fff; }
+        #video { width: 100%; height: 100vh; object-fit: cover; }
+        #start {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            padding: 20px 40px; font-size: 20px; background: #007AFF;
+            color: white; border: none; border-radius: 10px; cursor: pointer;
+        }
+        #info {
+            position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.8);
+            padding: 15px; border-radius: 10px; max-width: 300px;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <button id="start" onclick="start()">Start Camera</button>
+    <video id="video" autoplay playsinline class="hidden"></video>
+    <div id="info" class="hidden"></div>
+
+    <script>
+        async function start() {
+            const video = document.getElementById('video');
+            const btn = document.getElementById('start');
+            const info = document.getElementById('info');
+
+            btn.textContent = 'Loading...';
+            btn.disabled = true;
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+
+                video.srcObject = stream;
+
+                btn.classList.add('hidden');
+                video.classList.remove('hidden');
+                info.classList.remove('hidden');
+                info.innerHTML = '<div style="color:#0f0">✓ Camera Active!</div>';
+
+            } catch (err) {
+                alert('Camera Error: ' + err.message);
+                btn.textContent = 'Try Again';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
