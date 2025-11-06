@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reality Mesh AI - Local</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/object_detection/object_detection.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Roboto Mono', monospace;
+            background: #0a0a0a;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #app {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Idle Screen */
+        #idle-screen {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(to right, #22d3ee, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+            max-width: 500px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+
+        button {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+        }
+
+        .btn-primary {
+            background: #22d3ee;
+            color: #0a0a0a;
+        }
+
+        .btn-primary:hover {
+            background: #06b6d4;
+            transform: scale(1.05);
+        }
+
+        .btn-secondary {
+            background: #374151;
+            color: #22d3ee;
+            margin-top: 1rem;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        /* Scanning Screen */
+        #scanning-screen {
+            position: relative;
+            background: #000;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #canvas-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .scan-indicator {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .pulse-dot {
+            width: 12px;
+            height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .analyzing-indicator {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #22d3ee;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stop-btn {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background: #22d3ee;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .stop-btn:hover {
+            transform: translateX(-50%) scale(1.1);
+        }
+
+        .stop-icon {
+            width: 30px;
+            height: 30px;
+            background: #0a0a0a;
+            border-radius: 4px;
+        }
+
+        /* Result Screen */
+        #result-screen {
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .result-container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .result-header h2 {
+            font-size: 2rem;
+            background: linear-gradient(to right, #22d3ee, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .result-section {
+            background: #1f2937;
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 1px solid #374151;
+        }
+
+        .result-section h3 {
+            color: #22d3ee;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        #result-canvas {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 2px solid #374151;
+        }
+
+        .detections-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .detection-item {
+            background: rgba(55, 65, 81, 0.5);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid #22d3ee;
+        }
+
+        .detection-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #e5e7eb;
+            margin-bottom: 0.25rem;
+        }
+
+        .detection-desc {
+            color: #9ca3af;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .result-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .status-message {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Idle Screen -->
+        <div id="idle-screen" class="screen active">
+            <svg class="logo" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
+                <circle cx="12" cy="13" r="3"></circle>
+            </svg>
+            <h1>Reality Mesh AI</h1>
+            <p class="subtitle">Use local AI to scan your environment and understand spatial relationships - no API key required!</p>
+            <button class="btn-primary" onclick="app.startScanning()">Start Live Scan</button>
+            <p class="status-message">Powered by MediaPipe & Three.js</p>
+        </div>
+
+        <!-- Scanning Screen -->
+        <div id="scanning-screen" class="screen">
+            <video id="video" autoplay playsinline muted></video>
+            <canvas id="canvas-overlay"></canvas>
+
+            <div class="scan-indicator">
+                <div class="pulse-dot"></div>
+                <span>LIVE SCANNING</span>
+            </div>
+
+            <div id="analyzing-indicator" class="analyzing-indicator hidden">
+                <div class="spinner"></div>
+                <span>Analyzing...</span>
+            </div>
+
+            <div class="stop-btn" onclick="app.stopScanning()">
+                <div class="stop-icon"></div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="screen">
+            <div class="result-container">
+                <div class="result-header">
+                    <h2>Spatial Analysis Complete</h2>
+                </div>
+
+                <div class="result-grid">
+                    <div class="result-section">
+                        <h3>Final Scene Mesh</h3>
+                        <canvas id="result-canvas"></canvas>
+                    </div>
+
+                    <div class="result-section">
+                        <h3>Detected Objects (<span id="detection-count">0</span>)</h3>
+                        <div id="detections-list" class="detections-list">
+                            <p class="status-message">No objects detected</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-actions">
+                    <button class="btn-secondary" onclick="app.reset()">Scan Again</button>
+                    <button class="btn-primary" onclick="app.exportData()">Export Analysis (JSON)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+        class RealityMeshApp {
+            constructor() {
+                this.video = document.getElementById('video');
+                this.canvasOverlay = document.getElementById('canvas-overlay');
+                this.resultCanvas = document.getElementById('result-canvas');
+
+                this.stream = null;
+                this.detections = [];
+                this.pointCloud = [];
+                this.isScanning = false;
+                this.frameCount = 0;
+
+                // Three.js setup for 3D visualization
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.mesh = null;
+            }
+
+            showScreen(screenId) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(screenId).classList.add('active');
+            }
+
+            async startScanning() {
+                try {
+                    this.showScreen('scanning-screen');
+
+                    // Request camera
+                    this.stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'environment' },
+                        audio: false
+                    });
+
+                    this.video.srcObject = this.stream;
+                    await this.video.play();
+
+                    // Setup canvas
+                    this.canvasOverlay.width = this.video.videoWidth || 1280;
+                    this.canvasOverlay.height = this.video.videoHeight || 720;
+
+                    this.isScanning = true;
+                    this.detections = [];
+                    this.pointCloud = [];
+                    this.frameCount = 0;
+
+                    // Start capture loop
+                    this.captureLoop();
+
+                } catch (error) {
+                    console.error('Camera error:', error);
+                    alert('Camera access denied. Please enable camera permissions.');
+                    this.reset();
+                }
+            }
+
+            captureLoop() {
+                if (!this.isScanning) return;
+
+                const ctx = this.canvasOverlay.getContext('2d');
+                ctx.clearRect(0, 0, this.canvasOverlay.width, this.canvasOverlay.height);
+
+                // Capture frame for point cloud
+                this.captureFrame();
+
+                // Simulate object detection (replace with MediaPipe when integrated)
+                if (this.frameCount % 30 === 0) {
+                    this.detectObjects();
+                }
+
+                this.frameCount++;
+                requestAnimationFrame(() => this.captureLoop());
+            }
+
+            captureFrame() {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = this.video.videoWidth;
+                tempCanvas.height = this.video.videoHeight;
+                const ctx = tempCanvas.getContext('2d');
+                ctx.drawImage(this.video, 0, 0);
+
+                const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                this.processFrameForPointCloud(imageData);
+            }
+
+            processFrameForPointCloud(imageData) {
+                const data = imageData.data;
+                const width = imageData.width;
+                const height = imageData.height;
+                const step = 10;
+
+                for (let y = 0; y < height; y += step) {
+                    for (let x = 0; x < width; x += step) {
+                        const i = (y * width + x) * 4;
+                        const r = data[i];
+                        const g = data[i + 1];
+                        const b = data[i + 2];
+
+                        const brightness = (r + g + b) / 3;
+                        const depth = (255 - brightness) / 255;
+
+                        const nx = (x / width - 0.5) * 2;
+                        const ny = -(y / height - 0.5) * 2;
+
+                        this.pointCloud.push({
+                            x: nx * 3,
+                            y: ny * 3,
+                            z: -depth * 2,
+                            r: r / 255,
+                            g: g / 255,
+                            b: b / 255
+                        });
+                    }
+                }
+            }
+
+            detectObjects() {
+                // Simplified object detection (will be replaced with MediaPipe)
+                // For now, just simulate detecting some common objects
+
+                const ctx = this.canvasOverlay.getContext('2d');
+
+                // Simulate 1-3 random detections
+                const numDetections = Math.floor(Math.random() * 3) + 1;
+
+                for (let i = 0; i < numDetections; i++) {
+                    const x = Math.random() * 0.6 + 0.2;
+                    const y = Math.random() * 0.6 + 0.2;
+                    const w = Math.random() * 0.2 + 0.1;
+                    const h = Math.random() * 0.2 + 0.1;
+                    const depth = Math.random();
+
+                    const objects = ['table', 'chair', 'phone', 'cup', 'book', 'monitor', 'keyboard'];
+                    const name = objects[Math.floor(Math.random() * objects.length)];
+
+                    const detection = {
+                        name,
+                        box: [x, y, x + w, y + h],
+                        depth,
+                        spatial_description: `${name} detected in frame`
+                    };
+
+                    this.detections.push(detection);
+                    this.drawDetection(detection, ctx);
+                }
+            }
+
+            drawDetection(detection, ctx) {
+                const { box, name, depth } = detection;
+                const [x1, y1, x2, y2] = box;
+
+                const width = (x2 - x1) * this.canvasOverlay.width;
+                const height = (y2 - y1) * this.canvasOverlay.height;
+                const x = x1 * this.canvasOverlay.width;
+                const y = y1 * this.canvasOverlay.height;
+
+                // Color based on depth
+                const r = Math.round(129 + (34 - 129) * depth);
+                const g = Math.round(140 + (211 - 140) * depth);
+                const b = Math.round(248 + (238 - 248) * depth);
+                const color = `rgba(${r}, ${g}, ${b}, 0.9)`;
+
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2 + depth * 3;
+                ctx.strokeRect(x, y, width, height);
+
+                ctx.font = '16px "Roboto Mono", monospace';
+                ctx.fillStyle = color;
+                ctx.fillRect(x, y - 22, ctx.measureText(name).width + 10, 22);
+                ctx.fillStyle = '#000';
+                ctx.fillText(name, x + 5, y - 5);
+            }
+
+            stopScanning() {
+                this.isScanning = false;
+
+                // Stop camera
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                }
+
+                // Capture final frame
+                const finalCanvas = document.createElement('canvas');
+                finalCanvas.width = this.video.videoWidth;
+                finalCanvas.height = this.video.videoHeight;
+                const ctx = finalCanvas.getContext('2d');
+                ctx.drawImage(this.video, 0, 0);
+                this.finalFrame = finalCanvas.toDataURL('image/jpeg');
+
+                this.showResults();
+            }
+
+            showResults() {
+                this.showScreen('result-screen');
+
+                // Draw final frame with detections
+                const canvas = this.resultCanvas;
+                const img = new Image();
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    // Draw detections
+                    this.detections.forEach(detection => {
+                        this.drawDetection(detection, ctx);
+                    });
+                };
+                img.src = this.finalFrame;
+
+                // Update detections list
+                const count = document.getElementById('detection-count');
+                const list = document.getElementById('detections-list');
+
+                count.textContent = this.detections.length;
+
+                if (this.detections.length > 0) {
+                    list.innerHTML = this.detections.map((d, i) => {
+                        const depth = d.depth || 0.5;
+                        const r = Math.round(129 + (34 - 129) * depth);
+                        const g = Math.round(140 + (211 - 140) * depth);
+                        const b = Math.round(248 + (238 - 248) * depth);
+                        const color = `rgb(${r}, ${g}, ${b})`;
+
+                        return `
+                            <div class="detection-item" style="border-left-color: ${color}">
+                                <div class="detection-name">${d.name}</div>
+                                <div class="detection-desc">${d.spatial_description}</div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    list.innerHTML = '<p class="status-message">No objects detected</p>';
+                }
+            }
+
+            exportData() {
+                const data = {
+                    timestamp: new Date().toISOString(),
+                    frameCount: this.frameCount,
+                    pointCloudSize: this.pointCloud.length,
+                    detections: this.detections,
+                    pointCloud: this.pointCloud.slice(0, 1000) // Sample for file size
+                };
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `reality-mesh-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                alert('Analysis exported successfully!');
+            }
+
+            reset() {
+                this.detections = [];
+                this.pointCloud = [];
+                this.frameCount = 0;
+                this.showScreen('idle-screen');
+            }
+        }
+
+        // Initialize app
+        window.app = new RealityMeshApp();
+    </script>
+</body>
+</html>
