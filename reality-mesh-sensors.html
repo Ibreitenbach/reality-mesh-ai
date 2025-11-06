@@ -296,19 +296,21 @@
                     });
 
                     this.video.srcObject = stream;
-                    await this.video.play();
 
-                    this.canvas.width = this.video.videoWidth || 1280;
-                    this.canvas.height = this.video.videoHeight || 720;
-                    this.ctx = this.canvas.getContext('2d');
+                    // Wait for video to be ready
+                    this.video.onloadedmetadata = () => {
+                        this.canvas.width = this.video.videoWidth || 1280;
+                        this.canvas.height = this.video.videoHeight || 720;
+                        this.ctx = this.canvas.getContext('2d');
 
-                    this.isCapturing = true;
-                    this.startSensors();
-                    this.captureLoop();
+                        this.isCapturing = true;
+                        this.startSensors();
+                        this.captureLoop();
+                    };
 
                 } catch (error) {
                     console.error('Camera error:', error);
-                    alert('Camera access denied');
+                    alert('Camera access denied: ' + error.message);
                     this.reset();
                 }
             }
@@ -405,22 +407,24 @@
             captureLoop() {
                 if (!this.isCapturing) return;
 
-                // Capture frame
-                const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = this.video.videoWidth;
-                tempCanvas.height = this.video.videoHeight;
-                const ctx = tempCanvas.getContext('2d');
-                ctx.drawImage(this.video, 0, 0);
+                // Only capture every 3rd frame (10fps instead of 30fps)
+                if (this.frameCount % 3 === 0) {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = this.video.videoWidth;
+                    tempCanvas.height = this.video.videoHeight;
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(this.video, 0, 0);
 
-                const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-                this.processFrame(imageData);
+                    const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                    this.processFrame(imageData);
 
-                // Store sensor snapshot with this frame
-                this.sensorData.push({
-                    frame: this.frameCount,
-                    timestamp: Date.now(),
-                    ...JSON.parse(JSON.stringify(this.sensors))
-                });
+                    // Store sensor snapshot with this frame
+                    this.sensorData.push({
+                        frame: this.frameCount,
+                        timestamp: Date.now(),
+                        ...JSON.parse(JSON.stringify(this.sensors))
+                    });
+                }
 
                 this.frameCount++;
                 document.getElementById('point-count-value').textContent = this.pointCloud.length;
@@ -432,7 +436,7 @@
                 const data = imageData.data;
                 const width = imageData.width;
                 const height = imageData.height;
-                const step = 8;
+                const step = 20; // Increased from 8 to 20 for better performance
 
                 for (let y = 0; y < height; y += step) {
                     for (let x = 0; x < width; x += step) {
