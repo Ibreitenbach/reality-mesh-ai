@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Mesh Capture</title>
+    <title>Reality Mesh AI + Sensors</title>
     <style>
         * {
             margin: 0;
@@ -12,30 +12,71 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
             background: #0a0a0a;
             color: #fff;
             overflow: hidden;
         }
 
-        #container {
+        #app {
             width: 100vw;
             height: 100vh;
             position: relative;
         }
 
+        /* Video and Canvas */
         #video {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        canvas {
+        #canvas-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            pointer-events: none;
+        }
+
+        /* UI Overlays */
+        .ui-panel {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 12px 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(34, 211, 238, 0.3);
+        }
+
+        #sensor-panel {
+            top: 10px;
+            left: 10px;
+            font-size: 11px;
+            line-height: 1.5;
+            max-width: 200px;
+        }
+
+        #status-panel {
+            top: 10px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
         }
 
         #controls {
@@ -45,83 +86,424 @@
             transform: translateX(-50%);
             display: flex;
             gap: 15px;
-            z-index: 100;
         }
 
         button {
             padding: 15px 30px;
             font-size: 16px;
+            font-weight: 600;
             border: none;
-            border-radius: 25px;
+            border-radius: 50px;
             cursor: pointer;
-            background: #007AFF;
-            color: white;
-            font-weight: 600;
-            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.4);
             transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(34, 211, 238, 0.4);
         }
 
-        button:hover {
-            background: #0051D5;
-            transform: scale(1.05);
+        .btn-primary {
+            background: #22d3ee;
+            color: #0a0a0a;
         }
 
-        button:disabled {
-            background: #333;
-            cursor: not-allowed;
-            box-shadow: none;
+        .btn-primary:active {
+            transform: scale(0.95);
+            background: #06b6d4;
         }
 
-        #info {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px 20px;
-            border-radius: 10px;
-            font-size: 14px;
-            max-width: 300px;
+        .btn-danger {
+            background: #ef4444;
+            color: #fff;
         }
 
-        #status {
-            color: #4CAF50;
+        .btn-danger:active {
+            transform: scale(0.95);
+            background: #dc2626;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: #fff;
+        }
+
+        .sensor-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 3px 0;
+        }
+
+        .sensor-label {
+            color: #22d3ee;
             font-weight: 600;
-            margin-bottom: 5px;
         }
 
-        .loading {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 2px solid #fff;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-left: 8px;
+        .sensor-value {
+            color: #fff;
+            font-family: 'Courier New', monospace;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        #point-count {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: #22d3ee;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Start Screen */
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0a;
+            z-index: 1000;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #22d3ee, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+            margin-bottom: 2rem;
+            max-width: 500px;
+        }
+
+        .feature-list {
+            color: #22d3ee;
+            text-align: left;
+            margin: 1.5rem 0;
+            line-height: 1.8;
         }
     </style>
 </head>
 <body>
-    <div id="container">
-        <video id="video" autoplay playsinline></video>
-        <canvas id="canvas"></canvas>
-
-        <div id="info">
-            <div id="status">Initializing...</div>
-            <div id="details">Waiting for camera access</div>
+    <div id="app">
+        <!-- Start Screen -->
+        <div id="start-screen">
+            <h1>🌐 Reality Mesh AI</h1>
+            <p class="subtitle">Capture visual + sensor data to build a complete spatial understanding</p>
+            <div class="feature-list">
+                ✓ Camera + Depth Estimation<br>
+                ✓ Gyroscope & Accelerometer<br>
+                ✓ Magnetometer (Compass)<br>
+                ✓ GPS Location<br>
+                ✓ Ambient Light Sensor<br>
+                ✓ Device Orientation<br>
+            </div>
+            <button class="btn-primary" onclick="app.start()">Start Capture</button>
         </div>
 
-        <div id="controls">
-            <button id="startBtn" disabled>Start Capture</button>
-            <button id="captureBtn" disabled>Capture Mesh</button>
-            <button id="exportBtn" disabled>Export Mesh</button>
+        <!-- Main Capture UI -->
+        <video id="video" autoplay playsinline muted class="hidden"></video>
+        <canvas id="canvas-overlay" class="hidden"></canvas>
+
+        <div id="sensor-panel" class="ui-panel hidden">
+            <div class="sensor-row">
+                <span class="sensor-label">Orient:</span>
+                <span class="sensor-value" id="orientation">---</span>
+            </div>
+            <div class="sensor-row">
+                <span class="sensor-label">Gyro:</span>
+                <span class="sensor-value" id="gyro">---</span>
+            </div>
+            <div class="sensor-row">
+                <span class="sensor-label">Accel:</span>
+                <span class="sensor-value" id="accel">---</span>
+            </div>
+            <div class="sensor-row">
+                <span class="sensor-label">Magnet:</span>
+                <span class="sensor-value" id="magnet">---</span>
+            </div>
+            <div class="sensor-row">
+                <span class="sensor-label">Light:</span>
+                <span class="sensor-value" id="light">---</span>
+            </div>
+            <div class="sensor-row">
+                <span class="sensor-label">GPS:</span>
+                <span class="sensor-value" id="gps">---</span>
+            </div>
+        </div>
+
+        <div id="status-panel" class="ui-panel hidden">
+            <div class="pulse-dot"></div>
+            <span>RECORDING</span>
+        </div>
+
+        <div id="point-count" class="hidden">Points: <span id="point-count-value">0</span></div>
+
+        <div id="controls" class="hidden">
+            <button class="btn-danger" onclick="app.stop()">Stop</button>
+            <button class="btn-success" onclick="app.export()">Export</button>
         </div>
     </div>
 
-    <script type="module" src="app.js"></script>
+    <script type="module">
+        class RealityMeshApp {
+            constructor() {
+                this.video = document.getElementById('video');
+                this.canvas = document.getElementById('canvas-overlay');
+                this.ctx = null;
+
+                this.isCapturing = false;
+                this.pointCloud = [];
+                this.sensorData = [];
+                this.frameCount = 0;
+
+                // Sensor values
+                this.sensors = {
+                    orientation: { alpha: 0, beta: 0, gamma: 0 },
+                    gyroscope: { x: 0, y: 0, z: 0 },
+                    accelerometer: { x: 0, y: 0, z: 0 },
+                    magnetometer: { x: 0, y: 0, z: 0 },
+                    light: 0,
+                    gps: { lat: 0, lon: 0, alt: 0, accuracy: 0 }
+                };
+            }
+
+            async start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                this.video.classList.remove('hidden');
+                this.canvas.classList.remove('hidden');
+                document.getElementById('sensor-panel').classList.remove('hidden');
+                document.getElementById('status-panel').classList.remove('hidden');
+                document.getElementById('point-count').classList.remove('hidden');
+                document.getElementById('controls').classList.remove('hidden');
+
+                // Request camera
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'environment', width: 1280, height: 720 },
+                        audio: false
+                    });
+
+                    this.video.srcObject = stream;
+
+                    // Wait for video to be ready
+                    this.video.onloadedmetadata = () => {
+                        this.canvas.width = this.video.videoWidth || 1280;
+                        this.canvas.height = this.video.videoHeight || 720;
+                        this.ctx = this.canvas.getContext('2d');
+
+                        this.isCapturing = true;
+                        this.startSensors();
+                        this.captureLoop();
+                    };
+
+                } catch (error) {
+                    console.error('Camera error:', error);
+                    alert('Camera access denied: ' + error.message);
+                    this.reset();
+                }
+            }
+
+            startSensors() {
+                // Device Orientation (gyroscope + accelerometer combined)
+                window.addEventListener('deviceorientation', (e) => {
+                    this.sensors.orientation = {
+                        alpha: e.alpha?.toFixed(1) || 0,
+                        beta: e.beta?.toFixed(1) || 0,
+                        gamma: e.gamma?.toFixed(1) || 0
+                    };
+                    document.getElementById('orientation').textContent =
+                        `α${this.sensors.orientation.alpha}° β${this.sensors.orientation.beta}°`;
+                });
+
+                // Device Motion (accelerometer + gyroscope)
+                window.addEventListener('devicemotion', (e) => {
+                    if (e.accelerationIncludingGravity) {
+                        this.sensors.accelerometer = {
+                            x: e.accelerationIncludingGravity.x?.toFixed(2) || 0,
+                            y: e.accelerationIncludingGravity.y?.toFixed(2) || 0,
+                            z: e.accelerationIncludingGravity.z?.toFixed(2) || 0
+                        };
+                        document.getElementById('accel').textContent =
+                            `${this.sensors.accelerometer.x},${this.sensors.accelerometer.y},${this.sensors.accelerometer.z}`;
+                    }
+
+                    if (e.rotationRate) {
+                        this.sensors.gyroscope = {
+                            x: e.rotationRate.alpha?.toFixed(2) || 0,
+                            y: e.rotationRate.beta?.toFixed(2) || 0,
+                            z: e.rotationRate.gamma?.toFixed(2) || 0
+                        };
+                        document.getElementById('gyro').textContent =
+                            `${this.sensors.gyroscope.x},${this.sensors.gyroscope.y}`;
+                    }
+                });
+
+                // GPS / Geolocation
+                if (navigator.geolocation) {
+                    navigator.geolocation.watchPosition((position) => {
+                        this.sensors.gps = {
+                            lat: position.coords.latitude.toFixed(6),
+                            lon: position.coords.longitude.toFixed(6),
+                            alt: position.coords.altitude?.toFixed(1) || 0,
+                            accuracy: position.coords.accuracy?.toFixed(1) || 0
+                        };
+                        document.getElementById('gps').textContent =
+                            `${this.sensors.gps.lat},${this.sensors.gps.lon}`;
+                    });
+                }
+
+                // Ambient Light Sensor (if available)
+                if ('AmbientLightSensor' in window) {
+                    try {
+                        const sensor = new AmbientLightSensor();
+                        sensor.addEventListener('reading', () => {
+                            this.sensors.light = sensor.illuminance.toFixed(0);
+                            document.getElementById('light').textContent = `${this.sensors.light} lux`;
+                        });
+                        sensor.start();
+                    } catch (e) {
+                        console.log('Ambient light sensor not available');
+                        document.getElementById('light').textContent = 'N/A';
+                    }
+                } else {
+                    document.getElementById('light').textContent = 'N/A';
+                }
+
+                // Magnetometer (if available via Generic Sensor API)
+                if ('Magnetometer' in window) {
+                    try {
+                        const sensor = new Magnetometer();
+                        sensor.addEventListener('reading', () => {
+                            this.sensors.magnetometer = {
+                                x: sensor.x.toFixed(2),
+                                y: sensor.y.toFixed(2),
+                                z: sensor.z.toFixed(2)
+                            };
+                            document.getElementById('magnet').textContent =
+                                `${this.sensors.magnetometer.x},${this.sensors.magnetometer.y}`;
+                        });
+                        sensor.start();
+                    } catch (e) {
+                        console.log('Magnetometer not available');
+                        document.getElementById('magnet').textContent = 'N/A';
+                    }
+                } else {
+                    document.getElementById('magnet').textContent = 'N/A';
+                }
+            }
+
+            captureLoop() {
+                if (!this.isCapturing) return;
+
+                // Only capture every 3rd frame (10fps instead of 30fps)
+                if (this.frameCount % 3 === 0) {
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = this.video.videoWidth;
+                    tempCanvas.height = this.video.videoHeight;
+                    const ctx = tempCanvas.getContext('2d');
+                    ctx.drawImage(this.video, 0, 0);
+
+                    const imageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                    this.processFrame(imageData);
+
+                    // Store sensor snapshot with this frame
+                    this.sensorData.push({
+                        frame: this.frameCount,
+                        timestamp: Date.now(),
+                        ...JSON.parse(JSON.stringify(this.sensors))
+                    });
+                }
+
+                this.frameCount++;
+                document.getElementById('point-count-value').textContent = this.pointCloud.length;
+
+                requestAnimationFrame(() => this.captureLoop());
+            }
+
+            processFrame(imageData) {
+                const data = imageData.data;
+                const width = imageData.width;
+                const height = imageData.height;
+                const step = 20; // Increased from 8 to 20 for better performance
+
+                for (let y = 0; y < height; y += step) {
+                    for (let x = 0; x < width; x += step) {
+                        const i = (y * width + x) * 4;
+                        const r = data[i];
+                        const g = data[i + 1];
+                        const b = data[i + 2];
+
+                        const brightness = (r + g + b) / 3;
+                        const depth = (255 - brightness) / 255;
+
+                        const nx = (x / width - 0.5) * 2;
+                        const ny = -(y / height - 0.5) * 2;
+
+                        this.pointCloud.push({
+                            x: nx * 3,
+                            y: ny * 3,
+                            z: -depth * 2,
+                            r: r / 255,
+                            g: g / 255,
+                            b: b / 255,
+                            frame: this.frameCount
+                        });
+                    }
+                }
+            }
+
+            stop() {
+                this.isCapturing = false;
+                if (this.video.srcObject) {
+                    this.video.srcObject.getTracks().forEach(track => track.stop());
+                }
+                alert(`Capture stopped!\nFrames: ${this.frameCount}\nPoints: ${this.pointCloud.length}\nSensor samples: ${this.sensorData.length}`);
+            }
+
+            export() {
+                const data = {
+                    metadata: {
+                        timestamp: new Date().toISOString(),
+                        device: navigator.userAgent,
+                        frameCount: this.frameCount,
+                        pointCount: this.pointCloud.length,
+                        sensorSamples: this.sensorData.length,
+                        duration: (this.sensorData[this.sensorData.length - 1]?.timestamp - this.sensorData[0]?.timestamp) / 1000
+                    },
+                    sensors: this.sensorData,
+                    pointCloud: this.pointCloud.slice(0, 5000) // Sample for file size
+                };
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `reality-mesh-sensor-data-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                alert('Data exported successfully!');
+            }
+
+            reset() {
+                this.isCapturing = false;
+                location.reload();
+            }
+        }
+
+        window.app = new RealityMeshApp();
+    </script>
 </body>
 </html>
